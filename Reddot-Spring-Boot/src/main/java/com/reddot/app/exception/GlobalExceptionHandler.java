@@ -33,9 +33,9 @@ public class GlobalExceptionHandler {
                 String errorMessage = Objects.requireNonNull(methodArgumentNotValidException.getBindingResult().getFieldError()).getDefaultMessage();
                 errorObject = new ErrorObject(HttpStatus.BAD_REQUEST.value(), errorMessage, request.getDescription(false));
             }
-            case MethodArgumentTypeMismatchException _ ->
+            case MethodArgumentTypeMismatchException e ->
                     errorObject = new ErrorObject(HttpStatus.BAD_REQUEST.value(), "Invalid parameter type", request.getDescription(false));
-            case HttpMessageNotReadableException _ ->
+            case HttpMessageNotReadableException e ->
                     errorObject = new ErrorObject(HttpStatus.BAD_REQUEST.value(), "Invalid request body", request.getDescription(false));
             case null, default ->
                     errorObject = new ErrorObject(HttpStatus.BAD_REQUEST.value(), ex.getMessage(), request.getDescription(false));

@@ -4,7 +4,6 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
-import lombok.NonNull;
 import lombok.Setter;
 import org.springframework.data.domain.Persistable;
 
@@ -24,7 +23,7 @@ public abstract class BaseEntity implements Persistable<Integer>, Serializable {
     private final String temporaryKey = UUID.randomUUID().toString();
 
     @Id
-    @NonNull
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Integer id;
 
     @Transient

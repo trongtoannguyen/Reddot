@@ -19,6 +19,7 @@ import java.util.Set;
 
 @Log4j2
 @Component
+@Transactional
 public class DatabaseSeeder implements CommandLineRunner {
     private final PasswordEncoder encoder;
     private final UserRepository userRepository;
