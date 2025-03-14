@@ -1,0 +1,54 @@
+services:
+  mysql:
+    image: mysql
+    container_name: mysqlctn
+    restart: always
+    secrets:
+      - db-password
+    volumes:
+      - db-data:/var/lib/mysql
+    networks:
+      - spring-mysql
+    environment:
+      - MYSQL_DATABASE=reddotdb
+      - MYSQL_ROOT_PASSWORD_FILE=/run/secrets/db-password
+      - MYSQL_HOST=mysql
+    ports:
+      - "3307:3306"
+    expose:
+      - "3306"
+    healthcheck:
+      test: [ "CMD", "mysqladmin", "ping", "-h", "localhost" ]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+  reddot-spring-boot:
+    build: Reddot-Spring-Boot
+    image: reddot-spring-boot:1.0
+    container_name: reddot-spring-boot
+    ports:
+      - "8080:8080"
+    expose:
+      - "8080"
+    depends_on:
+      mysql:
+        condition: service_healthy
+    networks:
+      - spring-mysql
+    volumes_from:
+      - mysql
+
+    environment:
+      - MYSQL_DATABASE=reddotdb
+      - MYSQL_HOST=mysql
+      - MYSQL_USER=root
+      - MYSQL_PASSWORD_FILE=/run/secrets/db-password
+      #explain: Spring Boot apps by default bind to localhost (127.0.0.1). Inside Docker, you must bind to 0.0.0.0 for external access:
+      - SERVER_ADDRESS=0.0.0.0
+networks:
+  spring-mysql:
+secrets:
+  db-password:
+    file: ./db/db-password.txt
+volumes:
+  db-data:
