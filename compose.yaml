@@ -30,14 +30,21 @@ services:
       - "8080:8080"
     expose:
       - "8080"
+    develop:
+      watch:
+        - path: Reddot-Spring-Boot/target/classes
+          target: /app
+          action: sync+restart
+        - path: Reddot-Spring-Boot/pom.xml
+          target: /app/pom.xml
+          action: rebuild
     depends_on:
       mysql:
         condition: service_healthy
     networks:
       - spring-mysql
-    volumes_from:
-      - mysql
-
+    volumes:
+      - ~/.m2:/home/reddot/.m2 # Maven cache for current user
     environment:
       - MYSQL_DATABASE=reddotdb
       - MYSQL_HOST=mysql

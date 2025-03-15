@@ -11,7 +11,6 @@ import com.reddot.app.entity.enumeration.ROLENAME;
 import com.reddot.app.entity.enumeration.VOTETYPE;
 import com.reddot.app.exception.BadRequestException;
 import com.reddot.app.exception.ResourceNotFoundException;
-import com.reddot.app.repository.BookmarkRepository;
 import com.reddot.app.repository.QuestionRepository;
 import com.reddot.app.repository.TagRepository;
 import com.reddot.app.repository.UserRepository;
@@ -32,12 +31,12 @@ import java.util.stream.Collectors;
 @Slf4j
 @Service
 @RequiredArgsConstructor
+//TODO: implement filter hidden question method
 public class QuestionServiceImp implements QuestionService {
     private final UserRepository userRepository;
     private final QuestionRepository questionRepository;
     private final QuestionAssembler questionAssembler;
     private final TagRepository tagRepository;
-    private final BookmarkRepository bookmarkRepository;
     private final BookmarkService bookmarkService;
 
     private static boolean isOwner(User user, Question question) {

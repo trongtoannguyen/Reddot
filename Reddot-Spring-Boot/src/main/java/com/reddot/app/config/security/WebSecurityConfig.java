@@ -83,20 +83,18 @@ public class WebSecurityConfig {
         return authProvider;
     }
 
-
-    /* cac endpiont truy cap tu  frontend*/
     @Bean
     public WebMvcConfigurer corsConfigurer() {
         return new WebMvcConfigurer() {
             @Override
             public void addCorsMappings(CorsRegistry registry) {
-                registry.addMapping("/**") // Áp dụng cho tất cả các endpoint
-                        .allowedOrigins("http://localhost:3000") // Cho phép ReactJS frontend
-                        .allowedMethods("GET", "POST", "PUT", "DELETE", "OPTIONS") // Cho phép các phương thức
-                        .allowedHeaders("*") // Cho phép tất cả headers
-                        .allowCredentials(true); // Cho phép gửi cookies (nếu có)
+                registry.addMapping("/**") // Apply to all endpoints
+                        .allowedOrigins("http://localhost:3000")
+                        .allowedMethods("GET", "POST", "PUT", "DELETE", "OPTIONS")
+                        .allowedHeaders("*") // Allow all headers
+                        .allowCredentials(true) // Allow cookies
+                        .maxAge(3600); // Cache preflight request for 1 hour
             }
         };
     }
-
 }
