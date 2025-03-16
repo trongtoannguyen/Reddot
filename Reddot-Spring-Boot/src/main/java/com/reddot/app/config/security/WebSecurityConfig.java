@@ -41,9 +41,10 @@ public class WebSecurityConfig {
                 .authorizeHttpRequests(auth -> auth
                         // Public endpoints
                         .requestMatchers("/hello", "/auth/**", "/questions/search").permitAll()
-                        .requestMatchers("/users", "/users/{id:[0-9]+}").permitAll()
-                        .requestMatchers(HttpMethod.GET, "/questions", "/questions/*").permitAll()
-                        .requestMatchers(HttpMethod.GET, "/comments", "/comments/*").permitAll()
+                        .requestMatchers("/users", "/users/{id:[\\d]+}").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/users", "/users/{ids:[\\d,]+}/bookmarks").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/questions", "/questions/{ids:[\\d,]+}").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/comments", "/comments/{ids:[\\d,]+}").permitAll()
                         .requestMatchers(HttpMethod.GET, "/notifications", "/notifications/*").permitAll()
                         .requestMatchers("/settings/reset-password", "/settings/reset-password/confirm", "/settings/email/confirm", "/settings/email/resend-confirm").permitAll()
 

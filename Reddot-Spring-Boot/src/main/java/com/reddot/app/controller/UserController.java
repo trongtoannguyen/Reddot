@@ -35,7 +35,7 @@ public class UserController {
      */
     @GetMapping("/{ids}/bookmarks")
     public ResponseEntity<ServiceResponse<PaginatedResponse<BookmarkDTO>>> getUserBookmarks(
-            @PathVariable List<Integer> ids,
+            @PathVariable("ids") List<Integer> ids,
             @RequestParam(required = false, defaultValue = "1") Integer page,
             @RequestParam(required = false, defaultValue = "10") Integer size,
             @RequestParam(required = false, defaultValue = "id") String orderBy,
