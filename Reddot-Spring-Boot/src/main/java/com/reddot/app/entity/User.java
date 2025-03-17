@@ -235,10 +235,4 @@ public class User extends BaseEntity implements UserDetails {
         this.jwtTokens.remove(jwtToken);
         jwtToken.setUser(null);
     }
-
-    //add comment to a question
-    public void addComment(Comment comment) {
-        this.comments.add(comment);
-        comment.setUser(this);
-    }
 }

@@ -81,12 +81,11 @@ public class DatabaseSeeder implements CommandLineRunner {
         }
 
         log.info("");
-        log.info("####### SEEDING COMPLETED #######");
         log.info("<<<<<<< GETTING ALL ROLEs");
         roleRepository.findAll().forEach(role ->
                 log.info(role.getName()));
 
-        log.info("<<<<<<< GETTING ALL BADGEs");
+        log.info("<<<<<<< GETTING ALL USERs");
         userRepository.findAll().forEach(u ->
                 log.info(u.getUsername()));
     }
@@ -157,13 +156,14 @@ public class DatabaseSeeder implements CommandLineRunner {
         Question question = questionRepository.findAll().getFirst();
         log.info("");
         log.info("########## SEEDING COMMENT ##########");
-        log.info(">>>>>>>>>> ADMIN COMMENT ON THIS QUESTION");
+        log.info(">>>>>>>>>> ADMIN COMMENT ON THIS QUESTION ...");
         Faker faker = new Faker();
         Comment comment = new Comment();
+        comment.setUser(user);
         comment.setText(faker.lorem().sentence());
         question.addComment(comment);
-        user.addComment(comment);
         commentRepository.save(comment);
+        log.info("DONE");
     }
 
     private void seedVote() {
@@ -172,7 +172,7 @@ public class DatabaseSeeder implements CommandLineRunner {
         Question question = questionRepository.findAll().getFirst();
         log.info("");
         log.info("########## SEEDING VOTE ##########");
-        log.info(">>>>>>> ADMIN VOTEs THE QUESTION");
+        log.info(">>>>>>> ADMIN VOTEs THE QUESTION...");
         VoteType upvote = voteTypeRepository.findByType(VOTETYPE.UPVOTE)
                 .orElseThrow(() -> new ResourceNotFoundException("Error: VoteType is not found."));
         Vote vote = new Vote();
@@ -180,6 +180,7 @@ public class DatabaseSeeder implements CommandLineRunner {
         vote.setQuestion(question);
         vote.setUser(user);
         voteRepository.save(vote);
+        log.info("DONE");
     }
 
     private void seedBookmark() {

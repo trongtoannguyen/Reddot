@@ -22,6 +22,15 @@ public interface CommentService {
     CommentDTO commentCreateOnQuestion(@NonNull User author, CommentPostDTO dto) throws ResourceNotFoundException;
 
     /**
+     * Create a new comment on the given comment.
+     * Auth required to create a new comment.
+     *
+     * @return This method returns the created comment.
+     * @throws ResourceNotFoundException if the author or comment is not found
+     */
+    CommentDTO commentReply(@NonNull User author, CommentPostDTO dto) throws ResourceNotFoundException;
+
+    /**
      * Get all comments on the site.
      *
      * @return a list of CommentDTO objects containing the comment details.

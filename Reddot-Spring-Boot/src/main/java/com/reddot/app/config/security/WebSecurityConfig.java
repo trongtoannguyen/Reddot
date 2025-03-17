@@ -49,7 +49,7 @@ public class WebSecurityConfig {
                         .requestMatchers("/settings/reset-password", "/settings/reset-password/confirm", "/settings/email/confirm", "/settings/email/resend-confirm").permitAll()
 
                         // Private endpoints accessible by role
-                        .requestMatchers("/private/**").hasRole("ADMIN")
+                        .requestMatchers("/private").hasRole("USER")
                         .requestMatchers("/admin/**").hasRole("ADMIN")
 
                         // OpenAPI endpoints

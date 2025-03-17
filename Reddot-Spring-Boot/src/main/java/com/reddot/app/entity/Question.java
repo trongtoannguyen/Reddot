@@ -69,14 +69,6 @@ public class Question extends BaseEntity {
     @Enumerated(EnumType.STRING)
     private Visibility visibility = Visibility.PUBLIC;
 
-    public void addTag(Tag tag) {
-        this.tags.add(tag);
-    }
-
-    public void removeTag(Tag tag) {
-        this.tags.remove(tag);
-    }
-
     public void addComment(Comment comment) {
         this.comments.add(comment);
         comment.setQuestion(this);

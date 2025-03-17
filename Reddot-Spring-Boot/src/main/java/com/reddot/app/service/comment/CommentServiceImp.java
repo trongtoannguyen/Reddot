@@ -44,6 +44,21 @@ public class CommentServiceImp implements CommentService {
     }
 
     @Override
+    public CommentDTO commentReply(@NonNull User author, CommentPostDTO dto) throws ResourceNotFoundException {
+        try {
+            Comment parent = getCommentById(dto.getId());
+            Comment reply = new Comment(dto.getBody(), author);
+            parent.addReply(reply);
+            commentRepository.save(reply);
+            return commentAssembler.toDTO(reply);
+        } catch (ResourceNotFoundException e) {
+            throw e;
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    @Override
     public List<CommentDTO> commentGetAll() {
         try {
             return commentAssembler.toListDTO(commentRepository.findAll());
