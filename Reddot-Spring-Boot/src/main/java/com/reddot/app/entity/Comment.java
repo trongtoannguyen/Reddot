@@ -16,7 +16,6 @@ import java.util.List;
 @NoArgsConstructor
 @EqualsAndHashCode(callSuper = true, onlyExplicitlyIncluded = true)
 public class Comment extends BaseEntity {
-    private boolean isDeleted = false;
     private String text;
     private int upvotes;
     private int downvotes;
@@ -62,8 +61,4 @@ public class Comment extends BaseEntity {
         this.replies.add(rep);
     }
 
-    // set status to deleted to keep data
-    public void removeReply(Comment rep) {
-        rep.setDeleted(true);
-    }
 }

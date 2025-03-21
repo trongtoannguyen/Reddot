@@ -1,6 +1,7 @@
 package com.reddot.app.entity;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.reddot.app.entity.enumeration.STATUS;
 import com.reddot.app.entity.enumeration.VOTETYPE;
 import jakarta.persistence.*;
 import lombok.*;
@@ -65,9 +66,6 @@ public class Question extends BaseEntity {
             fetch = FetchType.EAGER)
     private List<Vote> votes = new ArrayList<>();
 
-    @Builder.Default
-    @Enumerated(EnumType.STRING)
-    private Visibility visibility = Visibility.PUBLIC;
 
     public void addComment(Comment comment) {
         this.comments.add(comment);
@@ -106,8 +104,7 @@ public class Question extends BaseEntity {
         return this.upvotes * 3 - this.downvotes;
     }
 
-    public enum Visibility {
-        PUBLIC,
-        PRIVATE
+    public void filterPublicAssociation() {
+        this.comments = filterList(this.comments, c -> c.getStatus() == STATUS.PUBLIC);
     }
 }

@@ -8,6 +8,7 @@ import com.reddot.app.entity.Question;
 import com.reddot.app.entity.Tag;
 import com.reddot.app.entity.User;
 import com.reddot.app.entity.enumeration.ROLENAME;
+import com.reddot.app.entity.enumeration.STATUS;
 import com.reddot.app.entity.enumeration.VOTETYPE;
 import com.reddot.app.exception.BadRequestException;
 import com.reddot.app.exception.ResourceNotFoundException;
@@ -26,12 +27,12 @@ import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
-import java.util.stream.Collectors;
+
+import static com.reddot.app.entity.BaseEntity.filterList;
 
 @Slf4j
 @Service
 @RequiredArgsConstructor
-//TODO: implement filter hidden question method
 public class QuestionServiceImp implements QuestionService {
     private final UserRepository userRepository;
     private final QuestionRepository questionRepository;
@@ -43,6 +44,7 @@ public class QuestionServiceImp implements QuestionService {
         if (user == null || question == null) {
             return false;
         }
+        assert question.getUser().getId() != null;
         return question.getUser().getId().equals(user.getId());
     }
 
@@ -50,8 +52,7 @@ public class QuestionServiceImp implements QuestionService {
         if (user == null) {
             return false;
         }
-        return user.getRoles().stream().anyMatch(role -> role.getName().equals(ROLENAME.ROLE_ADMIN)
-                                                         || role.getName().equals(ROLENAME.ROLE_MODERATOR));
+        return user.getRoles().stream().anyMatch(role -> role.getName().equals(ROLENAME.ROLE_ADMIN) || role.getName().equals(ROLENAME.ROLE_MODERATOR));
     }
 
     /**
@@ -78,12 +79,7 @@ public class QuestionServiceImp implements QuestionService {
                 }
                 tagRepository.saveAll(tags);
             }
-            Question question = Question.builder()
-                    .body(dto.getBody())
-                    .title(dto.getTitle())
-                    .tags(tags)
-                    .user(creator)
-                    .build();
+            Question question = Question.builder().body(dto.getBody()).title(dto.getTitle()).tags(tags).user(creator).build();
             questionRepository.save(question);
             QuestionDTO dto1 = questionAssembler.toDTO(question);
 
@@ -101,10 +97,20 @@ public class QuestionServiceImp implements QuestionService {
     }
 
     @Override
-    public List<QuestionDTO> questionGetByIds(List<Integer> ids) {
+    public List<QuestionDTO> questionGetAll(boolean includeHidden) {
         try {
-            List<Question> list = getQuestionByIds(ids);
-            return questionAssembler.toDTOList(list);
+            List<Question> questions = getAllQuestions(includeHidden);
+            return questionAssembler.toDTOList(questions);
+        } catch (Exception e) {
+            log.error("An error occurred while retrieving the questions", e);
+            throw new RuntimeException(e);
+        }
+    }
+
+    @Override
+    public List<QuestionDTO> questionGetByIds(List<Integer> ids, boolean includeHidden) {
+        try {
+            return questionAssembler.toDTOList(getQuestionByIds(ids, includeHidden));
         } catch (Exception e) {
             log.error("An error occurred while retrieving the question: ", e);
             throw new RuntimeException(e);
@@ -114,8 +120,8 @@ public class QuestionServiceImp implements QuestionService {
     @Override
     public List<QuestionDTO> questionGetByIdsWithUser(List<Integer> ids, @NonNull User user) throws ResourceNotFoundException {
         try {
-            List<Question> list = getQuestionByIds(ids);
-            return getQuestionDTOS(user, list);
+            List<Question> questions = getQuestionByIds(ids, false);
+            return getQuestionDTOS(user, questions);
         } catch (ResourceNotFoundException e) {
             log.error(e.getMessage());
             throw e;
@@ -126,28 +132,27 @@ public class QuestionServiceImp implements QuestionService {
     }
 
     @Override
-    public List<QuestionDTO> questionGetAll() {
-        try {
-            List<Question> list = questionRepository.findAll().stream()
-                    .filter(question -> question.getVisibility() != Question.Visibility.PRIVATE)
-                    .collect(Collectors.toList());
-            return questionAssembler.toDTOList(list);
-        } catch (Exception e) {
-            log.error("An error occurred while retrieving the questions", e);
-            throw new RuntimeException(e);
+    public List<QuestionDTO> questionGetAllOfUserId(Integer userId, String sort, boolean includeHidden) {
+        User loggedInUser = getUserById(userId);
+        if (loggedInUser == null) {
+            throw new ResourceNotFoundException("User with id " + userId + " not found");
         }
+        List<Question> questions = getQuestionsByUserId(userId, includeHidden);
+        if ("score".equalsIgnoreCase(sort)) {
+            questions.sort((q1, q2) -> Integer.compare(q2.getScore(), q1.getScore()));
+        } else if ("newest".equalsIgnoreCase(sort)) {
+            questions.sort((q1, q2) -> q2.getCreatedAt().compareTo(q1.getCreatedAt()));
+        } else {
+            questions.sort((q1, q2) -> Integer.compare(q2.getScore(), q1.getScore()));
+        }
+        return getQuestionDTOS(loggedInUser, questions);
     }
 
     @Override
-    public List<QuestionDTO> questionGetAllWithUser(@NonNull User user) throws ResourceNotFoundException {
+    public List<QuestionDTO> questionGetAllWithUser(@NonNull User user, boolean includeHidden) throws ResourceNotFoundException {
         try {
             Assert.notNull(user, "User cannot be null");
-
-            // get non-private or their own question
-            List<Question> list = questionRepository.findAll().stream()
-                    .filter(question -> question.getVisibility() != Question.Visibility.PRIVATE
-                                        || question.getUser().getId().equals(user.getId()))
-                    .toList();
+            List<Question> list = getAllQuestions(includeHidden);
             return getQuestionDTOS(user, list);
         } catch (ResourceNotFoundException e) {
             log.error(e.getMessage());
@@ -161,7 +166,7 @@ public class QuestionServiceImp implements QuestionService {
     @Override
     public QuestionDTO questionUpdate(User user, QuestionUpdateDTO dto) throws ResourceNotFoundException, BadRequestException {
         try {
-            Question question = getSingleQuestionById(dto.getId());
+            Question question = getQuestionByIds(List.of(dto.getId()), false).getFirst();
 
             // Check if the user is the owner, admin, or moderator
             boolean isOwner = isOwner(user, question);
@@ -205,7 +210,7 @@ public class QuestionServiceImp implements QuestionService {
     public void questionDelete(Integer questionId, User user) throws ResourceNotFoundException, BadRequestException {
         try {
             Assert.notNull(user, "User cannot be null");
-            Question question = getSingleQuestionById(questionId);
+            Question question = getQuestionByIds(List.of(questionId), false).getFirst();
 
             // Check if the user is the owner, admin, or moderator
             boolean isOwner = isOwner(user, question);
@@ -216,7 +221,8 @@ public class QuestionServiceImp implements QuestionService {
             if (question.isClosed()) {
                 throw new BadRequestException("You cannot delete a closed question");
             }
-            questionRepository.delete(question);
+            question.setStatus(STATUS.HIDDEN);
+            questionRepository.save(question);
         } catch (ResourceNotFoundException | BadRequestException e) {
             log.error(e.getMessage());
             throw e;
@@ -270,80 +276,42 @@ public class QuestionServiceImp implements QuestionService {
     @Override
     public List<QuestionDTO> searchByKeyword(String content) {
         List<Question> questions = questionRepository.findByKeyword(content.toLowerCase());
-
-        questions = questions.stream()
-                .filter(question -> question.getVisibility() == Question.Visibility.PUBLIC)
-                .toList();
-
-        return questions.stream().map(questionAssembler::toDTO).collect(Collectors.toList());
+        return questionAssembler.toDTOList(questions);
     }
 
     @Override
     public List<QuestionDTO> searchByDisplayName(String displayName) {
         List<Question> questions = questionRepository.findByDisplayName(displayName.toLowerCase());
-
-        questions = questions.stream()
-                .filter(question -> question.getVisibility() == Question.Visibility.PUBLIC)
-                .toList();
-
-        return questions.stream().map(questionAssembler::toDTO).collect(Collectors.toList());
+        return questionAssembler.toDTOList(questions);
     }
 
-    /**
-     * Get all questions on the site with user id.
-     *
-     * @param userId the id of the user
-     * @param sort   the sorting order, default is by score.
-     * @return
-     */
-    @Override
-    public List<QuestionDTO> questionGetAllByUserId(Integer userId, String sort) {
-        User loggedInUser = getUserById(userId);
-        if (loggedInUser == null) {
-            throw new ResourceNotFoundException("User with id " + userId + " not found");
-        }
-
-        List<Question> questions = questionRepository.findByUserId(userId).stream()
-                .filter(question -> question.getVisibility() == Question.Visibility.PUBLIC)
-                .collect(Collectors.toList());
-
-        if ("score".equalsIgnoreCase(sort)) {
-            questions.sort((q1, q2) -> Integer.compare(q2.getScore(), q1.getScore()));
-        } else if ("newest".equalsIgnoreCase(sort)) {
-            questions.sort((q1, q2) -> q2.getCreatedAt().compareTo(q1.getCreatedAt()));
-        } else {
-            questions.sort((q1, q2) -> Integer.compare(q2.getScore(), q1.getScore()));
-        }
-
-        return getQuestionDTOS(loggedInUser, questions);
+    // Utility method
+    private List<Question> filterQuestion(List<Question> questions) {
+        questions = filterList(questions, question -> question.getStatus().equals(STATUS.PUBLIC));
+        questions.forEach(Question::filterPublicAssociation);
+        return questions;
     }
 
-    @Override
-    public QuestionDTO toggleVisibility(Integer questionId, Integer userId) throws ResourceNotFoundException, BadRequestException {
-        Question question = questionRepository.findById(questionId)
-                .orElseThrow(() -> new ResourceNotFoundException("Question Not Found"));
+    private List<Question> getAllQuestions(boolean includeHidden) {
+        List<Question> questions = questionRepository.findAll();
+        if (!includeHidden)
+            return filterQuestion(questions);
+        return questions;
 
-        if (!question.getUser().getId().equals(userId)) {
-            throw new BadRequestException("You are not permitted to change this question");
-        }
-
-        if (question.getVisibility() == Question.Visibility.PUBLIC) {
-            question.setVisibility(Question.Visibility.PRIVATE);
-        } else {
-            question.setVisibility(Question.Visibility.PUBLIC);
-        }
-
-        questionRepository.save(question);
-
-        return questionAssembler.toDTO(question);
     }
 
-    private Question getSingleQuestionById(Integer id) {
-        return questionRepository.findById(id).filter(question -> question.getVisibility() != Question.Visibility.PRIVATE).orElseThrow(() -> new ResourceNotFoundException("Question with id `" + id + "` not found"));
+    private List<Question> getQuestionsByUserId(Integer userId, boolean includeHidden) {
+        List<Question> questions = questionRepository.findByUserId(userId);
+        if (!includeHidden)
+            return filterQuestion(questions);
+        return questions;
     }
 
-    private List<Question> getQuestionByIds(List<Integer> ids) {
-        return questionRepository.findAllById(ids);
+    private List<Question> getQuestionByIds(List<Integer> ids, boolean includeHidden) {
+        List<Question> questions = questionRepository.findAllById(ids);
+        if (!includeHidden)
+            return filterQuestion(questions);
+        return questions;
     }
 
     private List<QuestionDTO> getQuestionDTOS(@NonNull User user, List<Question> list) {

@@ -14,7 +14,7 @@ services:
       - MYSQL_ROOT_PASSWORD_FILE=/run/secrets/db-password
       - MYSQL_HOST=mysql
     ports:
-      - "3307:3306"
+      - "3306:3306" # stop local MySQL server before running this
     expose:
       - "3306"
     healthcheck:

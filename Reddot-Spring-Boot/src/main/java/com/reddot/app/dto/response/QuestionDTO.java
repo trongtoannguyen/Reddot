@@ -1,6 +1,6 @@
 package com.reddot.app.dto.response;
 
-import com.reddot.app.entity.Question;
+import com.reddot.app.entity.enumeration.STATUS;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.ToString;
@@ -22,20 +22,20 @@ import java.util.Set;
 public class QuestionDTO {
     // TODO: Design Improvements: Avoid Direct Entity Usage in DTOs (CommentDTO)
     private Integer questionId;
+    private STATUS status;
     private String title;
     private String body;
-    private Set<TagDTO> tags = new HashSet<>();
-    private ShallowUserDTO author;
     private LocalDateTime creationDate;
     private LocalDateTime lastEditDate;
     private LocalDateTime closeDate;
     private int upvotes;
-    private Boolean upvoted;
     private int downvotes;
-    private Boolean downvoted;
-    private Boolean bookmarked;
-    private int commentCount;
     private int score;
+    private int commentCount;
+    private boolean upvoted;
+    private boolean downvoted;
+    private boolean bookmarked;
+    private Set<TagDTO> tags = new HashSet<>();
     private List<CommentDTO> commentList = new ArrayList<>();
-    private Question.Visibility visibility;
+    private ShallowUserDTO author;
 }

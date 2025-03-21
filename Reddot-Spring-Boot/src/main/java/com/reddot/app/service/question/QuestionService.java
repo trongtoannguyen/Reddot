@@ -27,11 +27,12 @@ public interface QuestionService {
     /**
      * Get the questions identified by a list of ids.
      *
-     * @param ids the id of the question
+     * @param ids           the id of the question
+     * @param includeHidden whether to include hidden questions and related hidden associations
      * @return QuestionDTO object containing the question details
      */
-    // todo: https://api.stackexchange.com/docs/questions-by-ids
-    List<QuestionDTO> questionGetByIds(List<Integer> ids);
+    // TODO: https://api.stackexchange.com/docs/questions-by-ids
+    List<QuestionDTO> questionGetByIds(List<Integer> ids, boolean includeHidden);
 
     /**
      * Get questions identified by id in a list.
@@ -49,28 +50,39 @@ public interface QuestionService {
      *
      * @return List of QuestionDTO objects containing the question details
      */
-    List<QuestionDTO> questionGetAll();
+    default List<QuestionDTO> questionGetAll() {
+        return questionGetAll(false);
+    }
 
     /**
-     * Get all questions on the site with user id.
+     * Get all questions on the site.
+     *
+     * @return List of QuestionDTO objects containing the question details
+     */
+    List<QuestionDTO> questionGetAll(boolean includeHidden);
+
+    /**
+     * Get the questions asked by the users identified by user id.
      * <p>
      * This method useful when fetching questions in profile page of a specific user.
      *
-     * @param userId the id of the user
-     * @param sort   the sorting order.
+     * @param userId        the id of the user
+     * @param sort          the sorting order.
+     * @param includeHidden whether to include hidden questions and related hidden associations
      * @return List of QuestionDTO objects containing the question details
      */
-    List<QuestionDTO> questionGetAllByUserId(Integer userId, String sort);
+    List<QuestionDTO> questionGetAllOfUserId(Integer userId, String sort, boolean includeHidden);
 
     /**
-     * Get all questions on the site with user id.
+     * Get all questions on the site.
      * Method returns some user-specific properties related to the questions.
      *
-     * @param user the user requesting the questions
+     * @param user          the user requesting the questions
+     * @param includeHidden whether to include hidden questions and related hidden associations
      * @return List of QuestionDTO objects containing the question details
      * @throws ResourceNotFoundException if the user is not found
      */
-    List<QuestionDTO> questionGetAllWithUser(@NonNull User user) throws ResourceNotFoundException;
+    List<QuestionDTO> questionGetAllWithUser(@NonNull User user, boolean includeHidden) throws ResourceNotFoundException;
 
     /**
      * TODO: should implement review by mod before updating
@@ -100,11 +112,10 @@ public interface QuestionService {
 
     List<QuestionDTO> searchByDisplayName(String displayName);
 
-    QuestionDTO toggleVisibility(Integer questionId, Integer userId) throws ResourceNotFoundException, BadRequestException;
-
     boolean isQuestionUpvotedByUser(Integer questionId, Integer userId);
 
     boolean isQuestionDownvotedByUser(Integer questionId, Integer userId);
 
     boolean isQuestionBookmarkedByUser(Integer questionId, Integer userId);
+
 }

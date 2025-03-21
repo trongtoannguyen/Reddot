@@ -7,6 +7,7 @@ import org.mapstruct.DecoratedWith;
 import org.mapstruct.InjectionStrategy;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
+import org.springframework.stereotype.Component;
 
 import java.util.List;
 
@@ -15,6 +16,7 @@ import java.util.List;
  */
 @Mapper(componentModel = "spring", uses = {UserAssembler.class, CommentAssembler.class}, injectionStrategy = InjectionStrategy.CONSTRUCTOR)
 @DecoratedWith(QuestionMapperDecorator.class)
+@Component("delegate")
 public interface QuestionAssembler {
     /**
      * Reference resources:
@@ -25,7 +27,6 @@ public interface QuestionAssembler {
      *     </li>
      * </ol>
      */
-
     @Mapping(target = "questionId", source = "question.id")
     @Mapping(target = "author", source = "user")
     @Mapping(target = "commentCount", source = "question")

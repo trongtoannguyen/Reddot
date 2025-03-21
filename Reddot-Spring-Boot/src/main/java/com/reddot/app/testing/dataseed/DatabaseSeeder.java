@@ -31,7 +31,7 @@ public class DatabaseSeeder implements CommandLineRunner {
     private final VoteRepository voteRepository;
     private final CommentRepository commentRepository;
     private final BookmarkRepository bookmarkRepository;
-    private final String userName = "test user";
+    private final String userName = "toannguyen.fordev";
     private final String adminName = "test admin";
 
 
@@ -116,7 +116,7 @@ public class DatabaseSeeder implements CommandLineRunner {
 
         log.info(">>>>>>> INITIALIZING USER DATA");
         Faker faker = new Faker();
-        String email = faker.internet().emailAddress();
+        String email = "toannguyen.fordev@gmail.com";
         String raw = "user";
         String password = encoder.encode(raw);
         String adminEmail = faker.internet().emailAddress();
@@ -129,6 +129,8 @@ public class DatabaseSeeder implements CommandLineRunner {
         User seedUser = new User(userName, email, password);
         seedUser.setRoles(new HashSet<>(Set.of(userRole)));
         seedUser.addBadge(badge);
+        seedUser.setEmailVerified(true);
+        seedUser.setEnabled(true);
         addPerson(faker, seedUser);
 
         // seed the admin user

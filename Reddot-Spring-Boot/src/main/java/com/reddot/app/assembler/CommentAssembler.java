@@ -6,11 +6,13 @@ import com.reddot.app.entity.Comment;
 import org.mapstruct.DecoratedWith;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
+import org.springframework.stereotype.Component;
 
 import java.util.List;
 
 @Mapper(componentModel = "spring", uses = {UserAssembler.class})
 @DecoratedWith(CommentMapperDecorator.class)
+@Component("delegate")
 public interface CommentAssembler {
 
     @Mapping(target = "commentId", source = "id")
@@ -22,6 +24,6 @@ public interface CommentAssembler {
     @Mapping(target = "downvoted", ignore = true)
     CommentDTO toDTO(Comment comment);
 
-    List<CommentDTO> toListDTO(List<Comment> comments);
+    List<CommentDTO> toDTOList(List<Comment> comments);
 
 }

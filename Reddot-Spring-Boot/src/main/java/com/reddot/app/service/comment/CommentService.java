@@ -2,6 +2,7 @@ package com.reddot.app.service.comment;
 
 import com.reddot.app.dto.request.CommentPostDTO;
 import com.reddot.app.dto.response.CommentDTO;
+import com.reddot.app.entity.Comment;
 import com.reddot.app.entity.User;
 import com.reddot.app.exception.BadRequestException;
 import com.reddot.app.exception.ResourceNotFoundException;
@@ -71,4 +72,5 @@ public interface CommentService {
 
     Boolean isCommentDownvotedByUser(Integer commentId, Integer userId);
 
+    List<Comment> filterComment(List<Comment> comments);
 }

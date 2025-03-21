@@ -10,16 +10,17 @@ import java.time.LocalDateTime;
 @Setter
 @ToString
 public class CommentDTO {
-    private Integer commentId;
-    private String text;
     private Integer questionId;
+    private Integer commentId;
     private Integer responseTo;
-    private ShallowUserDTO author;
+    private String status;
+    private String text;
     private LocalDateTime creationDate;
     private LocalDateTime lastEditDate;
     private int upvotes;
-    private Boolean upvoted;
     private int downvotes;
-    private Boolean downvoted;
     private int score;
+    private Boolean upvoted;
+    private Boolean downvoted;
+    private ShallowUserDTO author;
 }

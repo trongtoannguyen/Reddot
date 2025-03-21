@@ -1,6 +1,7 @@
 package com.reddot.app.entity;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.reddot.app.entity.enumeration.STATUS;
 import jakarta.persistence.*;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
@@ -9,7 +10,11 @@ import org.springframework.data.domain.Persistable;
 
 import java.io.Serializable;
 import java.time.LocalDateTime;
+import java.util.Collections;
+import java.util.List;
 import java.util.UUID;
+import java.util.function.Predicate;
+import java.util.stream.Collectors;
 
 @Getter
 @Setter
@@ -26,6 +31,9 @@ public abstract class BaseEntity implements Persistable<Integer>, Serializable {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Integer id;
 
+    @Enumerated(EnumType.STRING)
+    private STATUS status = STATUS.PUBLIC;
+
     @Transient
     private boolean isNew = true;
 
@@ -34,6 +42,13 @@ public abstract class BaseEntity implements Persistable<Integer>, Serializable {
 
     @Column(name = "updated_at")
     private LocalDateTime updatedAt;
+
+    // generic filter list method
+    public static <T> List<T> filterList(List<T> items, Predicate<T> predicate) {
+        if (items == null)
+            return Collections.emptyList();
+        return items.stream().filter(predicate).collect(Collectors.toList());
+    }
 
     @JsonIgnore
     @Override
@@ -58,5 +73,6 @@ public abstract class BaseEntity implements Persistable<Integer>, Serializable {
         LocalDateTime now = LocalDateTime.now();
         this.setUpdatedAt(now);
     }
+
 }
 

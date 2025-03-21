@@ -84,7 +84,7 @@ public class QuestionController {
             List<QuestionDTO> list;
             if (SystemAuthentication.isLoggedIn(authentication)) {
                 User user = (User) authentication.getPrincipal();
-                list = questionService.questionGetAllWithUser(user);
+                list = questionService.questionGetAllWithUser(user, false);
             } else {
                 list = questionService.questionGetAll();
             }
@@ -110,7 +110,7 @@ public class QuestionController {
                 User user = (User) authentication.getPrincipal();
                 dtos = questionService.questionGetByIdsWithUser(ids, user);
             } else {
-                dtos = questionService.questionGetByIds(ids);
+                dtos = questionService.questionGetByIds(ids, false);
             }
             return ResponseEntity.ok(new ServiceResponse<>(200, "Question retrieved successfully", dtos));
         } catch (ResourceNotFoundException e) {
@@ -170,12 +170,6 @@ public class QuestionController {
         } else {
             return questionService.questionGetAll();
         }
-    }
-
-    @PutMapping("/{id}/visibility")
-    public ResponseEntity<QuestionDTO> toggleQuestionVisibility(@PathVariable Integer id, @RequestParam Integer userId) throws ResourceNotFoundException, BadRequestException {
-        QuestionDTO updatedQuestion = questionService.toggleVisibility(id, userId);
-        return ResponseEntity.ok(updatedQuestion);
     }
 
     @Operation(summary = "Bookmarks the question identified in {id}. [auth required]",
