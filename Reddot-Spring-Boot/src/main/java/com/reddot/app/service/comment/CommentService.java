@@ -72,5 +72,5 @@ public interface CommentService {
 
     Boolean isCommentDownvotedByUser(Integer commentId, Integer userId);
 
-    List<Comment> filterComment(List<Comment> comments);
+    List<Comment> filterPublicComment(List<Comment> comments);
 }

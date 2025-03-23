@@ -3,11 +3,11 @@ package com.reddot.app.service.comment;
 import com.reddot.app.assembler.CommentAssembler;
 import com.reddot.app.dto.request.CommentPostDTO;
 import com.reddot.app.dto.response.CommentDTO;
+import com.reddot.app.entity.BaseEntity;
 import com.reddot.app.entity.Comment;
 import com.reddot.app.entity.Question;
 import com.reddot.app.entity.User;
 import com.reddot.app.entity.enumeration.ROLENAME;
-import com.reddot.app.entity.enumeration.STATUS;
 import com.reddot.app.entity.enumeration.VOTETYPE;
 import com.reddot.app.exception.BadRequestException;
 import com.reddot.app.exception.ResourceNotFoundException;
@@ -64,7 +64,7 @@ public class CommentServiceImp implements CommentService {
     @Override
     public List<CommentDTO> commentGetAll() {
         try {
-            return commentAssembler.toDTOList(filterComment(getAllComments()));
+            return commentAssembler.toDTOList(filterPublicComment(getAllComments()));
         } catch (Exception e) {
             log.error("An error occurred while fetching comments", e);
             throw new RuntimeException(e);
@@ -75,7 +75,7 @@ public class CommentServiceImp implements CommentService {
     public List<CommentDTO> commentGetAllWithUser(@NonNull User user) throws ResourceNotFoundException {
         try {
             Assert.notNull(user, "User cannot be null");
-            List<Comment> comments = filterComment(getAllComments());
+            List<Comment> comments = filterPublicComment(getAllComments());
             List<CommentDTO> dtoList = commentAssembler.toDTOList(comments);
             dtoList.forEach(dto -> {
                 dto.setUpvoted(isCommentUpvotedByUser(dto.getCommentId(), user.getId()));
@@ -94,7 +94,7 @@ public class CommentServiceImp implements CommentService {
     @Override
     public List<CommentDTO> commentGetByIds(List<Integer> ids) {
         try {
-            List<Comment> comments = filterComment(getCommentByIds(ids));
+            List<Comment> comments = filterPublicComment(getCommentByIds(ids));
             return commentAssembler.toDTOList(comments);
         } catch (Exception e) {
             log.error(e.getMessage());
@@ -105,7 +105,7 @@ public class CommentServiceImp implements CommentService {
     @Override
     public List<CommentDTO> commentGetByIdsWithUser(List<Integer> ids, @NonNull User user) throws ResourceNotFoundException {
         try {
-            List<Comment> comments = filterComment(getCommentByIds(ids));
+            List<Comment> comments = filterPublicComment(getCommentByIds(ids));
             List<CommentDTO> dtoList = commentAssembler.toDTOList(comments);
 
             // custom logic for user-specific properties
@@ -147,10 +147,10 @@ public class CommentServiceImp implements CommentService {
             Comment comment = getCommentByIds(List.of(id)).getFirst();
             boolean isOwner = isOwner(user, comment);
             boolean isSuperUser = isSuperUser(user);
-            if (!isOwner && !isSuperUser) {
+            if (!(isOwner || isSuperUser)) {
                 throw new BadRequestException("You are not permitted to delete this comment");
             }
-            comment.setStatus(STATUS.HIDDEN);
+            comment.softRm();
             commentRepository.save(comment);
         } catch (ResourceNotFoundException e) {
             throw e;
@@ -170,8 +170,8 @@ public class CommentServiceImp implements CommentService {
     }
 
     @Override
-    public List<Comment> filterComment(List<Comment> comments) {
-        return filterList(comments, comment -> comment.getStatus().equals(STATUS.PUBLIC));
+    public List<Comment> filterPublicComment(List<Comment> comments) {
+        return filterList(comments, BaseEntity::isPublic);
     }
 
     private boolean isSuperUser(User user) {

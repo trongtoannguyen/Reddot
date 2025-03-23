@@ -50,6 +50,14 @@ public abstract class BaseEntity implements Persistable<Integer>, Serializable {
         return items.stream().filter(predicate).collect(Collectors.toList());
     }
 
+    public void softRm() {
+        this.setStatus(STATUS.DELETED);
+    }
+
+    public boolean isPublic() {
+        return this.getStatus() == STATUS.PUBLIC;
+    }
+
     @JsonIgnore
     @Override
     public boolean isNew() {

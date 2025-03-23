@@ -104,13 +104,9 @@ public class CommentController {
                     """)
     @DeleteMapping("/{id}/delete")
     public ResponseEntity<ServiceResponse<String>> deleteComment(@PathVariable Integer id) {
-        try {
-            Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-            User user = (User) authentication.getPrincipal();
-            commentService.commentDelete(id, user);
-            return ResponseEntity.ok(new ServiceResponse<>(200, "Comment deleted successfully", "Comment deleted successfully"));
-        } catch (Exception e) {
-            throw new RuntimeException(e);
-        }
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        User user = (User) authentication.getPrincipal();
+        commentService.commentDelete(id, user);
+        return ResponseEntity.ok(new ServiceResponse<>(200, "Comment deleted successfully", "Comment deleted successfully"));
     }
 }

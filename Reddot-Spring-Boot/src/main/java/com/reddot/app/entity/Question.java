@@ -1,7 +1,6 @@
 package com.reddot.app.entity;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
-import com.reddot.app.entity.enumeration.STATUS;
 import com.reddot.app.entity.enumeration.VOTETYPE;
 import jakarta.persistence.*;
 import lombok.*;
@@ -44,8 +43,7 @@ public class Question extends BaseEntity {
     @JsonIgnore
     @Builder.Default
     @OneToMany(mappedBy = "question",
-            cascade = CascadeType.ALL,
-            orphanRemoval = true)
+            cascade = CascadeType.ALL)
     private List<Comment> comments = new ArrayList<>();
 
     @Builder.Default
@@ -105,6 +103,6 @@ public class Question extends BaseEntity {
     }
 
     public void filterPublicAssociation() {
-        this.comments = filterList(this.comments, c -> c.getStatus() == STATUS.PUBLIC);
+        this.comments = filterList(this.comments, BaseEntity::isPublic);
     }
 }

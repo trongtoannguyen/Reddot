@@ -71,7 +71,7 @@ public interface QuestionService {
      * @param includeHidden whether to include hidden questions and related hidden associations
      * @return List of QuestionDTO objects containing the question details
      */
-    List<QuestionDTO> questionGetAllOfUserId(Integer userId, String sort, boolean includeHidden);
+    List<QuestionDTO> questionGetAllOfUserId(Integer userId, String sort, boolean includeHidden) throws ResourceNotFoundException;
 
     /**
      * Get all questions on the site.
@@ -97,12 +97,14 @@ public interface QuestionService {
     QuestionDTO questionUpdate(User user, QuestionUpdateDTO dto) throws ResourceNotFoundException, BadRequestException;
 
     /**
-     * @param questionId the id of the question
-     * @param user       the user requesting the question
+     * Deletes the given question.
+     *
+     * @param id   the id of the question
+     * @param user the user requesting the question
      * @throws ResourceNotFoundException if the question is not found
      * @throws BadRequestException       if the user is not permitted to delete the question
      */
-    void questionDelete(Integer questionId, User user) throws ResourceNotFoundException, BadRequestException;
+    void questionDelete(Integer id, User user) throws ResourceNotFoundException, BadRequestException;
 
     QuestionDTO questionBookmark(Integer id, Integer userId);
 
