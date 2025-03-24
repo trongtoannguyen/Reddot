@@ -23,6 +23,21 @@ public class CommentController {
 
     private final CommentService commentService;
 
+    @Operation(summary = "Reply a given comment. [auth required]",
+            description = """
+                    Reply to an existing comment given by id path.
+                    
+                    This method returns the replied comment.
+                    """)
+    @PostMapping("{id}/reply")
+    public ResponseEntity<ServiceResponse<CommentDTO>> replyComment(@PathVariable Integer id, @RequestBody CommentPostDTO dto) {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        User user = (User) authentication.getPrincipal();
+        dto.setId(id);
+        CommentDTO reply = commentService.commentReply(user, dto);
+        return ResponseEntity.ok(new ServiceResponse<>(200, "Comment replied successfully", reply));
+    }
+
     @Operation(summary = "Get all comments on the site.",
             description = "This method returns a list of undeleted comments on the site.")
     @GetMapping
@@ -89,13 +104,9 @@ public class CommentController {
                     """)
     @DeleteMapping("/{id}/delete")
     public ResponseEntity<ServiceResponse<String>> deleteComment(@PathVariable Integer id) {
-        try {
-            Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-            User user = (User) authentication.getPrincipal();
-            commentService.commentDelete(id, user);
-            return ResponseEntity.ok(new ServiceResponse<>(200, "Comment deleted successfully", "Comment deleted successfully"));
-        } catch (Exception e) {
-            throw new RuntimeException(e);
-        }
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        User user = (User) authentication.getPrincipal();
+        commentService.commentDelete(id, user);
+        return ResponseEntity.ok(new ServiceResponse<>(200, "Comment deleted successfully", "Comment deleted successfully"));
     }
 }

@@ -43,8 +43,7 @@ public class Question extends BaseEntity {
     @JsonIgnore
     @Builder.Default
     @OneToMany(mappedBy = "question",
-            cascade = CascadeType.ALL,
-            orphanRemoval = true)
+            cascade = CascadeType.ALL)
     private List<Comment> comments = new ArrayList<>();
 
     @Builder.Default
@@ -65,17 +64,6 @@ public class Question extends BaseEntity {
             fetch = FetchType.EAGER)
     private List<Vote> votes = new ArrayList<>();
 
-    @Builder.Default
-    @Enumerated(EnumType.STRING)
-    private Visibility visibility = Visibility.PUBLIC;
-
-    public void addTag(Tag tag) {
-        this.tags.add(tag);
-    }
-
-    public void removeTag(Tag tag) {
-        this.tags.remove(tag);
-    }
 
     public void addComment(Comment comment) {
         this.comments.add(comment);
@@ -114,8 +102,7 @@ public class Question extends BaseEntity {
         return this.upvotes * 3 - this.downvotes;
     }
 
-    public enum Visibility {
-        PUBLIC,
-        PRIVATE
+    public void filterPublicAssociation() {
+        this.comments = filterList(this.comments, BaseEntity::isPublic);
     }
 }

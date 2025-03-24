@@ -2,6 +2,7 @@ package com.reddot.app.service.comment;
 
 import com.reddot.app.dto.request.CommentPostDTO;
 import com.reddot.app.dto.response.CommentDTO;
+import com.reddot.app.entity.Comment;
 import com.reddot.app.entity.User;
 import com.reddot.app.exception.BadRequestException;
 import com.reddot.app.exception.ResourceNotFoundException;
@@ -20,6 +21,15 @@ public interface CommentService {
      * @throws ResourceNotFoundException if the author or question is not found
      */
     CommentDTO commentCreateOnQuestion(@NonNull User author, CommentPostDTO dto) throws ResourceNotFoundException;
+
+    /**
+     * Create a new comment on the given comment.
+     * Auth required to create a new comment.
+     *
+     * @return This method returns the created comment.
+     * @throws ResourceNotFoundException if the author or comment is not found
+     */
+    CommentDTO commentReply(@NonNull User author, CommentPostDTO dto) throws ResourceNotFoundException;
 
     /**
      * Get all comments on the site.
@@ -62,4 +72,5 @@ public interface CommentService {
 
     Boolean isCommentDownvotedByUser(Integer commentId, Integer userId);
 
+    List<Comment> filterPublicComment(List<Comment> comments);
 }

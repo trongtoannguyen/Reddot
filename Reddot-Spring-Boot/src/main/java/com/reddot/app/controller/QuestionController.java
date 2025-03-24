@@ -8,7 +8,6 @@ import com.reddot.app.dto.response.QuestionDTO;
 import com.reddot.app.dto.response.ServiceResponse;
 import com.reddot.app.entity.User;
 import com.reddot.app.exception.BadRequestException;
-import com.reddot.app.exception.ResourceNotFoundException;
 import com.reddot.app.service.comment.CommentService;
 import com.reddot.app.service.question.QuestionService;
 import com.reddot.app.service.system.SystemAuthentication;
@@ -57,19 +56,13 @@ public class QuestionController {
             This method returns the created question.""")
     @PostMapping("/add")
     public ResponseEntity<ServiceResponse<QuestionDTO>> createQuestion(@Valid @RequestBody QuestionCreateDTO dto) {
-        try {
-            Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-            if (!SystemAuthentication.isLoggedIn(authentication)) {
-                throw new BadRequestException("You must be logged in to create a question");
-            }
-            User user = (User) authentication.getPrincipal();
-            QuestionDTO questionDTO = questionService.questionCreate(user, dto);
-            return ResponseEntity.ok(new ServiceResponse<>(200, "Question created successfully", questionDTO));
-        } catch (BadRequestException | ResourceNotFoundException e) {
-            throw e;
-        } catch (Exception e) {
-            throw new RuntimeException(e);
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        if (!SystemAuthentication.isLoggedIn(authentication)) {
+            throw new BadRequestException("You must be logged in to create a question");
         }
+        User user = (User) authentication.getPrincipal();
+        QuestionDTO questionDTO = questionService.questionCreate(user, dto);
+        return ResponseEntity.ok(new ServiceResponse<>(200, "Question created successfully", questionDTO));
     }
 
     @Operation(summary = "Gets all the questions on the site.",
@@ -79,21 +72,15 @@ public class QuestionController {
                     This method returns a list of questions.""")
     @GetMapping
     public ResponseEntity<ServiceResponse<List<QuestionDTO>>> getAllQuestions() {
-        try {
-            Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-            List<QuestionDTO> list;
-            if (SystemAuthentication.isLoggedIn(authentication)) {
-                User user = (User) authentication.getPrincipal();
-                list = questionService.questionGetAllWithUser(user);
-            } else {
-                list = questionService.questionGetAll();
-            }
-            return ResponseEntity.ok(new ServiceResponse<>(200, "Questions retrieved successfully", list));
-        } catch (ResourceNotFoundException e) {
-            throw e;
-        } catch (Exception e) {
-            throw new RuntimeException(e.getMessage());
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        List<QuestionDTO> list;
+        if (SystemAuthentication.isLoggedIn(authentication)) {
+            User user = (User) authentication.getPrincipal();
+            list = questionService.questionGetAllWithUser(user, false);
+        } else {
+            list = questionService.questionGetAll();
         }
+        return ResponseEntity.ok(new ServiceResponse<>(200, "Questions retrieved successfully", list));
     }
 
     @Operation(summary = "Returns questions identified in {ids}.",
@@ -103,21 +90,15 @@ public class QuestionController {
                     This method returns a list of questions.""")
     @GetMapping("/{ids}")
     public ResponseEntity<ServiceResponse<List<QuestionDTO>>> getQuestionByIds(@PathVariable List<Integer> ids) {
-        try {
-            List<QuestionDTO> dtos;
-            Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-            if (SystemAuthentication.isLoggedIn(authentication)) {
-                User user = (User) authentication.getPrincipal();
-                dtos = questionService.questionGetByIdsWithUser(ids, user);
-            } else {
-                dtos = questionService.questionGetByIds(ids);
-            }
-            return ResponseEntity.ok(new ServiceResponse<>(200, "Question retrieved successfully", dtos));
-        } catch (ResourceNotFoundException e) {
-            throw new ResourceNotFoundException(e.getMessage());
-        } catch (Exception e) {
-            throw new RuntimeException(e.getMessage());
+        List<QuestionDTO> list;
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        if (SystemAuthentication.isLoggedIn(authentication)) {
+            User user = (User) authentication.getPrincipal();
+            list = questionService.questionGetByIdsWithUser(ids, user);
+        } else {
+            list = questionService.questionGetByIds(ids, false);
         }
+        return ResponseEntity.ok(new ServiceResponse<>(200, "Question retrieved successfully", list));
     }
 
     @Operation(summary = "Edit an existing question. [auth required]",
@@ -127,17 +108,11 @@ public class QuestionController {
                     This method returns the updated question.""")
     @PutMapping("/{id}/update")
     public ResponseEntity<ServiceResponse<QuestionDTO>> updateQuestion(@PathVariable Integer id, @RequestBody QuestionUpdateDTO dto) {
-        try {
-            Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-            User user = (User) authentication.getPrincipal();
-            dto.setId(id);
-            QuestionDTO questionDTO = questionService.questionUpdate(user, dto);
-            return ResponseEntity.ok(new ServiceResponse<>(200, "Question updated successfully", questionDTO));
-        } catch (ResourceNotFoundException | BadRequestException e) {
-            throw e;
-        } catch (Exception e) {
-            throw new RuntimeException(e);
-        }
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        User user = (User) authentication.getPrincipal();
+        dto.setId(id);
+        QuestionDTO questionDTO = questionService.questionUpdate(user, dto);
+        return ResponseEntity.ok(new ServiceResponse<>(200, "Question updated successfully", questionDTO));
     }
 
     @Operation(summary = "Deletes the question identified in {id}. [auth required]",
@@ -170,12 +145,6 @@ public class QuestionController {
         } else {
             return questionService.questionGetAll();
         }
-    }
-
-    @PutMapping("/{id}/visibility")
-    public ResponseEntity<QuestionDTO> toggleQuestionVisibility(@PathVariable Integer id, @RequestParam Integer userId) throws ResourceNotFoundException, BadRequestException {
-        QuestionDTO updatedQuestion = questionService.toggleVisibility(id, userId);
-        return ResponseEntity.ok(updatedQuestion);
     }
 
     @Operation(summary = "Bookmarks the question identified in {id}. [auth required]",

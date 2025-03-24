@@ -8,6 +8,7 @@ import com.reddot.app.dto.response.ServiceResponse;
 import com.reddot.app.exception.ResourceNotFoundException;
 import com.reddot.app.service.bookmark.BookmarkService;
 import com.reddot.app.service.question.QuestionService;
+import io.swagger.v3.oas.annotations.Operation;
 import org.springframework.data.domain.Page;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -35,7 +36,7 @@ public class UserController {
      */
     @GetMapping("/{ids}/bookmarks")
     public ResponseEntity<ServiceResponse<PaginatedResponse<BookmarkDTO>>> getUserBookmarks(
-            @PathVariable List<Integer> ids,
+            @PathVariable("ids") List<Integer> ids,
             @RequestParam(required = false, defaultValue = "1") Integer page,
             @RequestParam(required = false, defaultValue = "10") Integer size,
             @RequestParam(required = false, defaultValue = "id") String orderBy,
@@ -56,12 +57,15 @@ public class UserController {
         }
     }
 
-    @GetMapping("/{userId}/questions")
+    @Operation(summary = "Get all questions belonging to a user.",
+            description = "This method returns a list of questions that belong to a user."
+    )
+    @GetMapping("/{id}/questions")
     public ResponseEntity<ServiceResponse<List<QuestionDTO>>> getUserQuestions(
-            @PathVariable Integer userId,
+            @PathVariable Integer id,
             @RequestParam(required = false, defaultValue = "score") String sort) {
         try {
-            List<QuestionDTO> questions = questionService.questionGetAllByUserId(userId, sort);
+            List<QuestionDTO> questions = questionService.questionGetAllOfUserId(id, sort, false);
             return new ResponseEntity<>(
                     new ServiceResponse<>(
                             HttpStatus.OK.value(),

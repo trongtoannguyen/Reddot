@@ -1,7 +1,6 @@
 package com.reddot.app.service.bookmark;
 
 import com.reddot.app.assembler.BookmarkAssembler;
-import com.reddot.app.assembler.CommentAssembler;
 import com.reddot.app.assembler.QuestionAssembler;
 import com.reddot.app.dto.request.SearchCriteria;
 import com.reddot.app.dto.response.BookmarkDTO;
@@ -12,11 +11,9 @@ import com.reddot.app.entity.User;
 import com.reddot.app.exception.BadRequestException;
 import com.reddot.app.exception.ResourceNotFoundException;
 import com.reddot.app.repository.BookmarkRepository;
-import com.reddot.app.repository.CommentRepository;
 import com.reddot.app.repository.QuestionRepository;
 import com.reddot.app.repository.UserRepository;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -32,17 +29,13 @@ public class BookmarkServiceImp implements BookmarkService {
     private static final String ERROR_OCCURRED_BY = "Error occurred by user with id: ";
     private final QuestionRepository questionRepository;
     private final QuestionAssembler questionAssembler;
-    private final CommentRepository commentRepository;
-    private final CommentAssembler commentAssembler;
     private final BookmarkRepository bookmarkRepository;
     private final UserRepository userRepository;
     private final BookmarkAssembler bookmarkAssembler;
 
-    public BookmarkServiceImp(QuestionRepository questionRepository, @Qualifier("questionAssemblerImpl") QuestionAssembler questionAssembler, CommentRepository commentRepository, @Qualifier("commentAssemblerImpl") CommentAssembler commentAssembler, BookmarkRepository bookmarkRepository, UserRepository userRepository, BookmarkAssembler bookmarkAssembler) {
+    public BookmarkServiceImp(QuestionRepository questionRepository, QuestionAssembler questionAssembler, BookmarkRepository bookmarkRepository, UserRepository userRepository, BookmarkAssembler bookmarkAssembler) {
         this.questionRepository = questionRepository;
         this.questionAssembler = questionAssembler;
-        this.commentRepository = commentRepository;
-        this.commentAssembler = commentAssembler;
         this.bookmarkRepository = bookmarkRepository;
         this.userRepository = userRepository;
         this.bookmarkAssembler = bookmarkAssembler;

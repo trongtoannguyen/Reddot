@@ -31,7 +31,7 @@ public class DatabaseSeeder implements CommandLineRunner {
     private final VoteRepository voteRepository;
     private final CommentRepository commentRepository;
     private final BookmarkRepository bookmarkRepository;
-    private final String userName = "test user";
+    private final String userName = "toannguyen.fordev";
     private final String adminName = "test admin";
 
 
@@ -81,12 +81,11 @@ public class DatabaseSeeder implements CommandLineRunner {
         }
 
         log.info("");
-        log.info("####### SEEDING COMPLETED #######");
         log.info("<<<<<<< GETTING ALL ROLEs");
         roleRepository.findAll().forEach(role ->
                 log.info(role.getName()));
 
-        log.info("<<<<<<< GETTING ALL BADGEs");
+        log.info("<<<<<<< GETTING ALL USERs");
         userRepository.findAll().forEach(u ->
                 log.info(u.getUsername()));
     }
@@ -117,7 +116,7 @@ public class DatabaseSeeder implements CommandLineRunner {
 
         log.info(">>>>>>> INITIALIZING USER DATA");
         Faker faker = new Faker();
-        String email = faker.internet().emailAddress();
+        String email = "toannguyen.fordev@gmail.com";
         String raw = "user";
         String password = encoder.encode(raw);
         String adminEmail = faker.internet().emailAddress();
@@ -130,6 +129,8 @@ public class DatabaseSeeder implements CommandLineRunner {
         User seedUser = new User(userName, email, password);
         seedUser.setRoles(new HashSet<>(Set.of(userRole)));
         seedUser.addBadge(badge);
+        seedUser.setEmailVerified(true);
+        seedUser.setEnabled(true);
         addPerson(faker, seedUser);
 
         // seed the admin user
@@ -157,13 +158,14 @@ public class DatabaseSeeder implements CommandLineRunner {
         Question question = questionRepository.findAll().getFirst();
         log.info("");
         log.info("########## SEEDING COMMENT ##########");
-        log.info(">>>>>>>>>> ADMIN COMMENT ON THIS QUESTION");
+        log.info(">>>>>>>>>> ADMIN COMMENT ON THIS QUESTION ...");
         Faker faker = new Faker();
         Comment comment = new Comment();
+        comment.setUser(user);
         comment.setText(faker.lorem().sentence());
         question.addComment(comment);
-        user.addComment(comment);
         commentRepository.save(comment);
+        log.info("DONE");
     }
 
     private void seedVote() {
@@ -172,7 +174,7 @@ public class DatabaseSeeder implements CommandLineRunner {
         Question question = questionRepository.findAll().getFirst();
         log.info("");
         log.info("########## SEEDING VOTE ##########");
-        log.info(">>>>>>> ADMIN VOTEs THE QUESTION");
+        log.info(">>>>>>> ADMIN VOTEs THE QUESTION...");
         VoteType upvote = voteTypeRepository.findByType(VOTETYPE.UPVOTE)
                 .orElseThrow(() -> new ResourceNotFoundException("Error: VoteType is not found."));
         Vote vote = new Vote();
@@ -180,6 +182,7 @@ public class DatabaseSeeder implements CommandLineRunner {
         vote.setQuestion(question);
         vote.setUser(user);
         voteRepository.save(vote);
+        log.info("DONE");
     }
 
     private void seedBookmark() {

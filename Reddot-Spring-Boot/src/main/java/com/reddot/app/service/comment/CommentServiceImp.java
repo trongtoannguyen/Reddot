@@ -3,6 +3,7 @@ package com.reddot.app.service.comment;
 import com.reddot.app.assembler.CommentAssembler;
 import com.reddot.app.dto.request.CommentPostDTO;
 import com.reddot.app.dto.response.CommentDTO;
+import com.reddot.app.entity.BaseEntity;
 import com.reddot.app.entity.Comment;
 import com.reddot.app.entity.Question;
 import com.reddot.app.entity.User;
@@ -19,6 +20,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.util.Assert;
 
 import java.util.List;
+
+import static com.reddot.app.entity.BaseEntity.filterList;
 
 @Slf4j
 @Service
@@ -44,9 +47,24 @@ public class CommentServiceImp implements CommentService {
     }
 
     @Override
+    public CommentDTO commentReply(@NonNull User author, CommentPostDTO dto) throws ResourceNotFoundException {
+        try {
+            Comment parent = getCommentByIds(List.of(dto.getId())).getFirst();
+            Comment reply = new Comment(dto.getBody(), author);
+            parent.addReply(reply);
+            commentRepository.save(reply);
+            return commentAssembler.toDTO(reply);
+        } catch (ResourceNotFoundException e) {
+            throw e;
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    @Override
     public List<CommentDTO> commentGetAll() {
         try {
-            return commentAssembler.toListDTO(commentRepository.findAll());
+            return commentAssembler.toDTOList(filterPublicComment(getAllComments()));
         } catch (Exception e) {
             log.error("An error occurred while fetching comments", e);
             throw new RuntimeException(e);
@@ -57,7 +75,8 @@ public class CommentServiceImp implements CommentService {
     public List<CommentDTO> commentGetAllWithUser(@NonNull User user) throws ResourceNotFoundException {
         try {
             Assert.notNull(user, "User cannot be null");
-            List<CommentDTO> dtoList = commentAssembler.toListDTO(commentRepository.findAll());
+            List<Comment> comments = filterPublicComment(getAllComments());
+            List<CommentDTO> dtoList = commentAssembler.toDTOList(comments);
             dtoList.forEach(dto -> {
                 dto.setUpvoted(isCommentUpvotedByUser(dto.getCommentId(), user.getId()));
                 dto.setDownvoted(isCommentDownvotedByUser(dto.getCommentId(), user.getId()));
@@ -75,7 +94,8 @@ public class CommentServiceImp implements CommentService {
     @Override
     public List<CommentDTO> commentGetByIds(List<Integer> ids) {
         try {
-            return commentAssembler.toListDTO(getCommentByIds(ids));
+            List<Comment> comments = filterPublicComment(getCommentByIds(ids));
+            return commentAssembler.toDTOList(comments);
         } catch (Exception e) {
             log.error(e.getMessage());
             throw new RuntimeException(e);
@@ -85,14 +105,15 @@ public class CommentServiceImp implements CommentService {
     @Override
     public List<CommentDTO> commentGetByIdsWithUser(List<Integer> ids, @NonNull User user) throws ResourceNotFoundException {
         try {
-            List<CommentDTO> dtos = commentAssembler.toListDTO(getCommentByIds(ids));
+            List<Comment> comments = filterPublicComment(getCommentByIds(ids));
+            List<CommentDTO> dtoList = commentAssembler.toDTOList(comments);
 
             // custom logic for user-specific properties
-            dtos.forEach(dto -> {
+            dtoList.forEach(dto -> {
                 dto.setUpvoted(isCommentUpvotedByUser(dto.getCommentId(), user.getId()));
                 dto.setDownvoted(isCommentDownvotedByUser(dto.getCommentId(), user.getId()));
             });
-            return dtos;
+            return dtoList;
         } catch (Exception e) {
             log.error(e.getMessage());
             throw new RuntimeException(e);
@@ -102,7 +123,7 @@ public class CommentServiceImp implements CommentService {
     @Override
     public CommentDTO commentUpdate(User user, CommentPostDTO dto) throws ResourceNotFoundException, BadRequestException {
         try {
-            Comment comment = getCommentById(dto.getId());
+            Comment comment = getCommentByIds(List.of(dto.getId())).getFirst();
             //FIXME: FOLLOWING HELPER METHODS SHOULD BE REFACTORED INTO A SEPARATE SERVICE
             boolean isOwner = isOwner(user, comment);
             boolean isSuperUser = isSuperUser(user);
@@ -123,27 +144,19 @@ public class CommentServiceImp implements CommentService {
     public void commentDelete(Integer id, User user) throws ResourceNotFoundException, BadRequestException {
         try {
             Assert.notNull(user, "User cannot be null");
-            Comment comment = getCommentById(id);
+            Comment comment = getCommentByIds(List.of(id)).getFirst();
             boolean isOwner = isOwner(user, comment);
             boolean isSuperUser = isSuperUser(user);
-            if (!isOwner && !isSuperUser) {
+            if (!(isOwner || isSuperUser)) {
                 throw new BadRequestException("You are not permitted to delete this comment");
             }
-            commentRepository.delete(comment);
+            comment.softRm();
+            commentRepository.save(comment);
         } catch (ResourceNotFoundException e) {
             throw e;
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
-    }
-
-    private boolean isSuperUser(User user) {
-        return user.getRoles().stream().anyMatch(role -> role.getName().equals(ROLENAME.ROLE_ADMIN)
-                                                         || role.getName().equals(ROLENAME.ROLE_MODERATOR));
-    }
-
-    private boolean isOwner(User user, Comment comment) {
-        return user.getId().equals(comment.getUser().getId());
     }
 
     @Override
@@ -156,8 +169,23 @@ public class CommentServiceImp implements CommentService {
         return commentRepository.existsByIdAndVotes_UserIdAndVotes_VoteTypeId(commentId, userId, VOTETYPE.DOWNVOTE.getDirection());
     }
 
-    private Comment getCommentById(Integer id) {
-        return commentRepository.findById(id).orElseThrow(() -> new ResourceNotFoundException("Comment with id `" + id + "` not found"));
+    @Override
+    public List<Comment> filterPublicComment(List<Comment> comments) {
+        return filterList(comments, BaseEntity::isPublic);
+    }
+
+    private boolean isSuperUser(User user) {
+        return user.getRoles().stream().anyMatch(role -> role.getName().equals(ROLENAME.ROLE_ADMIN)
+                                                         || role.getName().equals(ROLENAME.ROLE_MODERATOR));
+    }
+
+    private boolean isOwner(User user, Comment comment) {
+        assert user.getId() != null;
+        return user.getId().equals(comment.getUser().getId());
+    }
+
+    private List<Comment> getAllComments() {
+        return commentRepository.findAll();
     }
 
     private List<Comment> getCommentByIds(List<Integer> ids) {

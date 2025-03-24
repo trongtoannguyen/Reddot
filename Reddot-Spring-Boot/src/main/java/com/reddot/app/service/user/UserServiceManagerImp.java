@@ -357,21 +357,6 @@ public class UserServiceManagerImp implements UserServiceManager {
     }
 
     @Override
-    public void membershipUpgrade(User user, MembershipRank rank) {
-        Membership currentMembership = user.getMembership();
-        if (currentMembership.getRank().ordinal() >= rank.ordinal()) {
-            throw new IllegalArgumentException("Cannot upgrade to the same rank or lower");
-        }
-
-        currentMembership.setRank(rank);
-        currentMembership.setStartDate(LocalDateTime.now());
-        currentMembership.setEndDate(LocalDateTime.now().plusDays(30));
-        currentMembership.setActive(true);
-
-        userRepository.save(user);
-    }
-
-    @Override
     public void membershipDowngrade(User user) {
         if (user == null) {
             throw new IllegalArgumentException("User not found");
